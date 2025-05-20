@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MarketAPI.MarketAPI.Models;
 using MarketAPI.Models;
 
 namespace MarketAPI.Data

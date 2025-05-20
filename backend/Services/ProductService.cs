@@ -1,6 +1,6 @@
 ﻿using MarketAPI.Data;
 using MarketAPI.Interfaces;
-using MarketAPI.MarketAPI.Models;
+using MarketAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketAPI.Services
@@ -14,6 +14,79 @@ namespace MarketAPI.Services
         {
             _productRepository = productRepository;
             _context = context;
+        }
+
+        public async Task<IEnumerable<Product>> GetAllProductsAsync()
+        {
+            return await _productRepository.GetAllAsync();
+        }
+
+        public async Task<Product?> GetProductByIdAsync(int id)
+        {
+            return await _productRepository.GetByIdAsync(id);
+        }
+
+        public async Task<Product> CreateProductAsync(ProductInputModel inputModel)
+        {
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == inputModel.CategoryName.ToLower());
+
+            if (category == null)
+            {
+                category = new Category { Name = inputModel.CategoryName };
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+            }
+
+            var product = new Product
+            {
+                Name = inputModel.Name,
+                Market = inputModel.Market,
+                Price = inputModel.Price,
+                CaloriesPer100g = inputModel.CaloriesPer100g,
+                ProteinPer100g = inputModel.ProteinPer100g,
+                CarbsPer100g = inputModel.CarbsPer100g,
+                FatPer100g = inputModel.FatPer100g,
+                CategoryId = category.Id,
+                ImageUrl = inputModel.ImageUrl,
+                CreatedAt = DateTime.Now
+            };
+
+            return await _productRepository.AddAsync(product);
+        }
+
+        public async Task<Product> UpdateProductAsync(int id, ProductInputModel inputModel)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+                throw new KeyNotFoundException($"Product with ID {id} not found.");
+
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == inputModel.CategoryName.ToLower());
+
+            if (category == null)
+            {
+                category = new Category { Name = inputModel.CategoryName };
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+            }
+
+            product.Name = inputModel.Name;
+            product.Market = inputModel.Market;
+            product.Price = inputModel.Price;
+            product.CaloriesPer100g = inputModel.CaloriesPer100g;
+            product.ProteinPer100g = inputModel.ProteinPer100g;
+            product.CarbsPer100g = inputModel.CarbsPer100g;
+            product.FatPer100g = inputModel.FatPer100g;
+            product.CategoryId = category.Id;
+            product.ImageUrl = inputModel.ImageUrl;
+
+            return await _productRepository.UpdateAsync(product);
+        }
+
+        public async Task DeleteProductAsync(int id)
+        {
+            await _productRepository.DeleteAsync(id);
         }
 
         public async Task<IEnumerable<object>> GetProductsAsync()
@@ -42,7 +115,6 @@ namespace MarketAPI.Services
 
             foreach (var item in products)
             {
-                // Kategori kontrolü
                 var category = await _context.Categories
                     .FirstOrDefaultAsync(c => c.Name.ToLower() == item.CategoryName.ToLower());
 
@@ -53,7 +125,6 @@ namespace MarketAPI.Services
                     await _context.SaveChangesAsync();
                 }
 
-                // Var olan ürünü getir
                 var existingProduct = await _productRepository.GetByNameAndMarketAsync(item.Name, item.Market);
 
                 if (existingProduct != null)
@@ -65,7 +136,7 @@ namespace MarketAPI.Services
                     existingProduct.FatPer100g = item.FatPer100g;
                     existingProduct.CategoryId = category.Id;
 
-                    _productRepository.Update(existingProduct);
+                    await _productRepository.UpdateAsync(existingProduct);
                     continue;
                 }
 
@@ -86,7 +157,6 @@ namespace MarketAPI.Services
                 await _productRepository.AddAsync(newProduct);
             }
 
-            await _productRepository.SaveChangesAsync();
             return products.Count;
         }
     }
