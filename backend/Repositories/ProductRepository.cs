@@ -32,20 +32,36 @@ namespace MarketAPI.Repositories
             return product;
         }
 
-        public new async Task<Product> UpdateAsync(Product product)
+        public new async Task<bool> UpdateAsync(Product product)
         {
-            _context.Products.Update(product);
-            await _context.SaveChangesAsync();
-            return product;
+            try
+            {
+                _context.Products.Update(product);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public new async Task DeleteAsync(int id)
+        public new async Task<bool> DeleteAsync(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            try
             {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                var product = await _context.Products.FindAsync(id);
+                if (product != null)
+                {
+                    _context.Products.Remove(product);
+                    await _context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
             }
         }
 

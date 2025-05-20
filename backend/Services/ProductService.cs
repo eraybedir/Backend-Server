@@ -55,7 +55,7 @@ namespace MarketAPI.Services
             return await _productRepository.AddAsync(product);
         }
 
-        public async Task<Product> UpdateProductAsync(int id, ProductInputModel inputModel)
+        public async Task<bool> UpdateProductAsync(int id, ProductInputModel inputModel)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
@@ -84,9 +84,9 @@ namespace MarketAPI.Services
             return await _productRepository.UpdateAsync(product);
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task<bool> DeleteProductAsync(int id)
         {
-            await _productRepository.DeleteAsync(id);
+            return await _productRepository.DeleteAsync(id);
         }
 
         public async Task<IEnumerable<object>> GetProductsAsync()
@@ -158,6 +158,16 @@ namespace MarketAPI.Services
             }
 
             return products.Count;
+        }
+
+        public async Task<Product?> GetProductByNameAndMarketAsync(string name, string market)
+        {
+            return await _productRepository.GetByNameAndMarketAsync(name, market);
+        }
+
+        public async Task<IEnumerable<Product>> GetAllProductsWithCategoryAsync()
+        {
+            return await _productRepository.GetAllWithCategoryAsync();
         }
     }
 }
